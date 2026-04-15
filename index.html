@@ -35,8 +35,8 @@
 
         .bee-path {
             position: absolute;
-            width: 100%;
-            height: 100%;
+            width: 300px;
+            height: 300px;
             border: 6px dashed #c8e6c9;
             border-radius: 50%;
             box-sizing: border-box;
@@ -44,7 +44,7 @@
 
         .flower {
             position: absolute;
-            top: -20px;
+            top: -25px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 3.5rem;
@@ -59,11 +59,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transform-origin: center 150px; 
-            left: calc(50% - 30px);
+            /* This is the magic part: it centers the bee on the path */
+            left: 120px; 
             top: -30px; 
-            transition: transform 1s linear;
+            /* The pivot is exactly 150px down from the top-center of the bee */
+            transform-origin: 30px 180px; 
             z-index: 10;
+            transform: rotate(0deg);
         }
 
         .happy-wiggle {
@@ -71,9 +73,9 @@
         }
 
         @keyframes wiggle {
-            0% { transform: rotate(var(--final-angle)) translate(0, 0); }
-            50% { transform: rotate(var(--final-angle)) translate(0, -10px); }
-            100% { transform: rotate(var(--final-angle)) translate(0, 0); }
+            0% { transform: rotate(360deg) translate(0, 0); }
+            50% { transform: rotate(360deg) translate(0, -10px); }
+            100% { transform: rotate(360deg) translate(0, 0); }
         }
 
         .timer-display {
@@ -200,14 +202,6 @@
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            if (totalTimeSet > 0) {
-                // Calculate the angle so 0 seconds remaining = 360 degrees
-                const progress = (totalTimeSet - seconds) / totalTimeSet;
-                const angle = progress * 360;
-                bee.style.transform = `rotate(${angle}deg)`;
-                bee.style.setProperty('--final-angle', `${angle}deg`);
-            }
         }
 
         function setTime(mins) {
@@ -215,7 +209,15 @@
             resetTimer();
             totalTimeSet = mins * 60;
             timeLeft = totalTimeSet;
+            
             updateDisplay(timeLeft);
+            
+            // Set smooth transition for the bee's flight
+            setTimeout(() => {
+                bee.style.transition = `transform ${totalTimeSet}s linear`;
+                bee.style.transform = `rotate(360deg)`;
+            }, 50);
+
             startTimer();
         }
 
@@ -226,9 +228,6 @@
 
         function startTimer() {
             clearInterval(countdown);
-            // Move the bee to the start position immediately
-            updateDisplay(timeLeft);
-            
             countdown = setInterval(() => {
                 timeLeft--;
                 updateDisplay(timeLeft);
@@ -241,10 +240,8 @@
         }
 
         function timerFinished() {
-            // Snap to flower and start wiggle
+            bee.style.transition = 'none';
             bee.style.transform = `rotate(360deg)`;
-            bee.style.setProperty('--final-angle', `360deg`);
-            
             bee.classList.add('happy-wiggle');
             display.textContent = "DONE!";
             playEndSound();
@@ -253,8 +250,8 @@
         function resetTimer() {
             clearInterval(countdown);
             bee.classList.remove('happy-wiggle');
+            bee.style.transition = 'none';
             bee.style.transform = `rotate(0deg)`;
-            bee.style.setProperty('--final-angle', `0deg`);
             updateDisplay(0);
         }
     </script>
