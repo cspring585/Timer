@@ -39,12 +39,13 @@
             height: 100%;
             border: 6px dotted #ffd54f;
             border-radius: 50%;
+            box-sizing: border-box;
         }
 
-        /* The Flower at the finish line */
+        /* The Flower is now placed exactly at the 0/360 degree mark */
         .flower {
             position: absolute;
-            top: -20px;
+            top: -25px; 
             left: 50%;
             transform: translateX(-50%);
             font-size: 3.5rem;
@@ -59,11 +60,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transform-origin: 160px 160px; 
-            left: 0;
-            top: 0;
+            /* This ensures the bee rotates around the center of the timer */
+            transform-origin: 30px 160px; 
+            left: calc(50% - 30px);
+            top: -30px; 
             transition: transform 1s linear;
             z-index: 20;
+            transform: rotate(0deg);
         }
 
         .timer-display {
@@ -193,6 +196,7 @@
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             
             if (totalTimeSet > 0) {
+                // Bee starts at 0 (on flower) and ends at 360 (back on flower)
                 const angle = ((totalTimeSet - seconds) / totalTimeSet) * 360;
                 bee.style.transform = `rotate(${angle}deg)`;
                 bee.style.setProperty('--final-angle', `${angle}deg`);
