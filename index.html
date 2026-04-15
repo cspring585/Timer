@@ -196,10 +196,15 @@
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             
             if (totalTimeSet > 0) {
-                // Bee starts at 0 (on flower) and ends at 360 (back on flower)
-                const angle = ((totalTimeSet - seconds) / totalTimeSet) * 360;
+                // We calculate progress based on time remaining
+                // This ensures the bee lands exactly at 360 degrees at the 0 second mark
+                const progress = (totalTimeSet - seconds) / totalTimeSet;
+                const angle = progress * 360;
+                
                 bee.style.transform = `rotate(${angle}deg)`;
                 bee.style.setProperty('--final-angle', `${angle}deg`);
+            }
+        }
             }
         }
 
@@ -229,10 +234,14 @@
         }
 
         function timerFinished() {
+            // Force the bee to the finish line flower
+            bee.style.transform = `rotate(360deg)`;
+            bee.style.setProperty('--final-angle', `360deg`);
+            
             bee.classList.add('happy-wiggle');
             display.textContent = "Bzzz!";
             playEndSound();
-        }
+            }
 
         function resetTimer() {
             clearInterval(countdown);
