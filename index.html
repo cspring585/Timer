@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bumblebee Timer</title>
+    <title>Bee and Flower Timer</title>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif; 
@@ -39,6 +39,16 @@
             height: 100%;
             border: 6px dotted #ffd54f;
             border-radius: 50%;
+        }
+
+        /* The Flower at the finish line */
+        .flower {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            z-index: 5;
         }
 
         #bee {
@@ -116,6 +126,7 @@
 
     <div class="timer-container">
         <div class="bee-path"></div>
+        <div class="flower">🌸</div>
         <div id="bee">🐝</div>
         <div id="display" class="timer-display">00:00</div>
     </div>
@@ -146,27 +157,23 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playEndSound() {
-            const duration = 2.0; // Longer sound
+            const duration = 2.0; 
             const startTime = audioCtx.currentTime;
 
-            // Main low-frequency hum
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
-            // Tremolo: This makes the volume go up and down
             const lfo = audioCtx.createOscillator();
             const lfoGain = audioCtx.createGain();
             
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(80, startTime); // Lower pitch for a big bee
-            osc.frequency.exponentialRampToValueAtTime(60, startTime + duration);
+            osc.frequency.setValueAtTime(85, startTime); 
+            osc.frequency.exponentialRampToValueAtTime(65, startTime + duration);
 
-            // Set up the volume "wobble" (LFO)
-            lfo.frequency.setValueAtTime(15, startTime); // How fast it wobbles
-            lfoGain.gain.setValueAtTime(0.05, startTime); // How much it wobbles
+            lfo.frequency.setValueAtTime(12, startTime); 
+            lfoGain.gain.setValueAtTime(0.06, startTime); 
             
             lfo.connect(lfoGain);
-            lfoGain.connect(gain.gain); // Wobble the main volume
+            lfoGain.connect(gain.gain); 
 
             gain.gain.setValueAtTime(0.2, startTime);
             gain.gain.linearRampToValueAtTime(0, startTime + duration);
