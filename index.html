@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funky Timer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #282c34;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.5s;
+            overflow: hidden;
+        }
+
+        h1 { font-size: 3rem; margin-bottom: 20px; }
+
+        .timer-display {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 20px;
+            padding: 20px 40px;
+            border-radius: 20px;
+            background: #3e4451;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Animation while running */
+        .running {
+            animation: pulse 1s infinite;
+            color: #61dafb;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Animation when finished */
+        .finished {
+            animation: party 0.2s infinite;
+        }
+
+        @keyframes party {
+            0% { background-color: #ff0000; }
+            25% { background-color: #00ff00; }
+            50% { background-color: #0000ff; }
+            75% { background-color: #ffff00; }
+            100% { background-color: #ff00ff; }
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background: #61dafb;
+            color: #282c34;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #21a1f1; transform: translateY(-3px); }
+        button:active { transform: translateY(0); }
+
+        .custom-input {
+            margin-top: 10px;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            border: none;
+            width: 80px;
+            text-align: center;
+        }
+
+        .action-btns {
+            margin-top: 30px;
+        }
+
+        .stop-btn { background: #ff4757; color: white; }
+    </style>
+</head>
+<body id="bg">
+
+    <h1>Let's Time It!</h1>
+
+    <div id="display" class="timer-display">00:00</div>
+
+    <div class="controls">
+        <button onclick="setTime(1)">1 Min</button>
+        <button onclick="setTime(5)">5 Min</button>
+        <button onclick="setTime(10)">10 Min</button>
+        <button onclick="setTime(15)">15 Min</button>
+    </div>
+
+    <div class="custom-input">
+        <input type="number" id="customMin" placeholder="Mins">
+        <button onclick="setCustomTime()">Set Custom</button>
+    </div>
+
+    <div class="action-btns">
+        <button class="stop-btn" onclick="resetTimer()">Reset</button>
+    </div>
+
+    <script>
+        let countdown;
+        let timeLeft;
+        const display = document.getElementById('display');
+        const body = document.getElementById('bg');
+
+        // Synthesis for "No Internet" sound effects
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playEndSound() {
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + i + 1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + (i * 0.2));
+                osc.stop(audioCtx.currentTime + (i * 0.2) + 0.5);
+            });
+        }
+
+        function updateDisplay(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function setTime(mins) {
+            resetTimer();
+            timeLeft = mins * 60;
+            updateDisplay(timeLeft);
+            startTimer();
+        }
+
+        function setCustomTime() {
+            const val = document.getElementById('customMin').value;
+            if (val > 0) setTime(val);
+        }
+
+        function startTimer() {
+            clearInterval(countdown);
+            display.classList.add('running');
+            
+            countdown = setInterval(() => {
+                timeLeft--;
+                updateDisplay(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    timerFinished();
+                }
+            }, 1000);
+        }
+
+        function timerFinished() {
+            display.classList.remove('running');
+            body.classList.add('finished');
+            display.textContent = "BOOM!";
+            playEndSound();
+        }
+
+        function resetTimer() {
+            clearInterval(countdown);
+            display.classList.remove('running');
+            body.classList.remove('finished');
+            updateDisplay(0);
+        }
+    </script>
+</body>
+</html>
