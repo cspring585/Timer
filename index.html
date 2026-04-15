@@ -42,10 +42,9 @@
             box-sizing: border-box;
         }
 
-        /* The Flower at the start/end point */
         .flower {
             position: absolute;
-            top: -20px; /* Positioned at the very top */
+            top: -20px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 3.5rem;
@@ -60,7 +59,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Pivot point is the center of the 300px container */
             transform-origin: center 150px; 
             left: calc(50% - 30px);
             top: -30px; 
@@ -69,13 +67,13 @@
         }
 
         .happy-wiggle {
-            animation: wiggle 0.3s ease-in-out infinite;
+            animation: wiggle 0.2s ease-in-out infinite;
         }
 
         @keyframes wiggle {
-            0% { margin-top: 0; }
-            50% { margin-top: -10px; }
-            100% { margin-top: 0; }
+            0% { transform: rotate(var(--final-angle)) translate(0, 0); }
+            50% { transform: rotate(var(--final-angle)) translate(0, -10px); }
+            100% { transform: rotate(var(--final-angle)) translate(0, 0); }
         }
 
         .timer-display {
@@ -155,7 +153,6 @@
         const display = document.getElementById('display');
         const bee = document.getElementById('bee');
 
-        // Initialize Audio Context but keep it suspended
         let audioCtx;
 
         function initAudio() {
@@ -169,25 +166,34 @@
 
         function playEndSound() {
             initAudio();
-            // A friendly "Buzzz-Buzzz" sound
-            const buzzCount = 3;
-            for (let i = 0; i < buzzCount; i++) {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                osc.type = 'sawtooth'; 
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime + (i * 0.4));
-                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + (i * 0.4) + 0.3);
-                
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime + (i * 0.4));
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (i * 0.4) + 0.3);
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(audioCtx.currentTime + (i * 0.4));
-                osc.stop(audioCtx.currentTime + (i * 0.4) + 0.3);
-            }
+            const duration = 2.0; 
+            const startTime = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const lfo = audioCtx.createOscillator();
+            const lfoGain = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(85, startTime); 
+            osc.frequency.exponentialRampToValueAtTime(65, startTime + duration);
+
+            lfo.frequency.setValueAtTime(12, startTime); 
+            lfoGain.gain.setValueAtTime(0.06, startTime); 
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(gain.gain); 
+
+            gain.gain.setValueAtTime(0.2, startTime);
+            gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            lfo.start();
+            osc.stop(startTime + duration);
+            lfo.stop(startTime + duration);
         }
 
         function updateDisplay(seconds) {
@@ -196,13 +202,16 @@
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             
             if (totalTimeSet > 0) {
-                const angle = ((totalTimeSet - seconds) / totalTimeSet) * 360;
+                // Calculate the angle so 0 seconds remaining = 360 degrees
+                const progress = (totalTimeSet - seconds) / totalTimeSet;
+                const angle = progress * 360;
                 bee.style.transform = `rotate(${angle}deg)`;
+                bee.style.setProperty('--final-angle', `${angle}deg`);
             }
         }
 
         function setTime(mins) {
-            initAudio(); // Wake up audio on button click
+            initAudio();
             resetTimer();
             totalTimeSet = mins * 60;
             timeLeft = totalTimeSet;
@@ -217,9 +226,13 @@
 
         function startTimer() {
             clearInterval(countdown);
+            // Move the bee to the start position immediately
+            updateDisplay(timeLeft);
+            
             countdown = setInterval(() => {
                 timeLeft--;
                 updateDisplay(timeLeft);
+                
                 if (timeLeft <= 0) {
                     clearInterval(countdown);
                     timerFinished();
@@ -228,6 +241,10 @@
         }
 
         function timerFinished() {
+            // Snap to flower and start wiggle
+            bee.style.transform = `rotate(360deg)`;
+            bee.style.setProperty('--final-angle', `360deg`);
+            
             bee.classList.add('happy-wiggle');
             display.textContent = "DONE!";
             playEndSound();
@@ -237,6 +254,7 @@
             clearInterval(countdown);
             bee.classList.remove('happy-wiggle');
             bee.style.transform = `rotate(0deg)`;
+            bee.style.setProperty('--final-angle', `0deg`);
             updateDisplay(0);
         }
     </script>
