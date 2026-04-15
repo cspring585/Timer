@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friendly Bee Timer</title>
+    <title>Bee to Flower Timer</title>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif; 
-            background-color: #f0f9ff; /* Soft sky blue */
+            background-color: #f0f9ff;
             color: #333;
             display: flex;
             flex-direction: column;
@@ -20,11 +20,10 @@
 
         h1 { 
             font-size: 2.5rem; 
-            color: #2e7d32; /* Garden green */
-            margin-bottom: 40px;
+            color: #2e7d32;
+            margin-bottom: 20px;
         }
 
-        /* The circular path for the bee */
         .timer-container {
             position: relative;
             width: 300px;
@@ -38,51 +37,57 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 8px dashed #c8e6c9;
+            border: 6px dashed #c8e6c9;
             border-radius: 50%;
+            box-sizing: border-box;
+        }
+
+        /* The Flower at the start/end point */
+        .flower {
+            position: absolute;
+            top: -20px; /* Positioned at the very top */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            z-index: 5;
         }
 
         #bee {
             position: absolute;
             font-size: 3rem;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Move pivot point to center of circle */
-            transform-origin: 150px 150px; 
-            left: 0;
-            top: 0;
+            /* Pivot point is the center of the 300px container */
+            transform-origin: center 150px; 
+            left: calc(50% - 30px);
+            top: -30px; 
             transition: transform 1s linear;
+            z-index: 10;
         }
 
-        /* Gentle wiggle animation for the end */
         .happy-wiggle {
-            animation: wiggle 0.5s ease-in-out infinite;
+            animation: wiggle 0.3s ease-in-out infinite;
         }
 
         @keyframes wiggle {
-            0% { transform: rotate(var(--final-angle)) translate(0, 0); }
-            50% { transform: rotate(var(--final-angle)) translate(5px, -5px); }
-            100% { transform: rotate(var(--final-angle)) translate(0, 0); }
+            0% { margin-top: 0; }
+            50% { margin-top: -10px; }
+            100% { margin-top: 0; }
         }
 
         .timer-display {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 900;
             color: #1b5e20;
-            z-index: 10;
+            z-index: 2;
             font-variant-numeric: tabular-nums;
         }
 
-        .finished-glow {
-            color: #4caf50;
-            text-shadow: 0 0 20px #81c784;
-        }
-
         .controls, .custom-input, .action-btns {
-            margin-top: 25px;
+            margin-top: 30px;
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
@@ -95,7 +100,7 @@
             cursor: pointer;
             border: none;
             border-radius: 12px;
-            background: #ffc107; /* Honey yellow */
+            background: #ffc107;
             color: #333;
             font-weight: bold;
             box-shadow: 0 4px 0 #ffa000;
@@ -118,9 +123,10 @@
 </head>
 <body>
 
-    <h1>Bee Busy!</h1>
+    <h1>Bee Happy!</h1>
 
     <div class="timer-container">
+        <div class="flower">🌸</div>
         <div class="bee-path"></div>
         <div id="bee">🐝</div>
         <div id="display" class="timer-display">00:00</div>
@@ -149,22 +155,39 @@
         const display = document.getElementById('display');
         const bee = document.getElementById('bee');
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Initialize Audio Context but keep it suspended
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
         function playEndSound() {
-            // Soft chime sound
-            const notes = [523.25, 659.25, 783.99]; 
-            notes.forEach((freq, i) => {
+            initAudio();
+            // A friendly "Buzzz-Buzzz" sound
+            const buzzCount = 3;
+            for (let i = 0; i < buzzCount; i++) {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = 'sine'; // Pure, soft tone
-                osc.frequency.value = freq;
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+                
+                osc.type = 'sawtooth'; 
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime + (i * 0.4));
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + (i * 0.4) + 0.3);
+                
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime + (i * 0.4));
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (i * 0.4) + 0.3);
+                
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + (i * 0.3));
-                osc.stop(audioCtx.currentTime + (i * 0.3) + 1);
-            });
+                
+                osc.start(audioCtx.currentTime + (i * 0.4));
+                osc.stop(audioCtx.currentTime + (i * 0.4) + 0.3);
+            }
         }
 
         function updateDisplay(seconds) {
@@ -172,16 +195,14 @@
             const secs = seconds % 60;
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             
-            // Move bee in a circle (360 degrees)
             if (totalTimeSet > 0) {
                 const angle = ((totalTimeSet - seconds) / totalTimeSet) * 360;
                 bee.style.transform = `rotate(${angle}deg)`;
-                // Store angle for the wiggle animation later
-                bee.style.setProperty('--final-angle', `${angle}deg`);
             }
         }
 
         function setTime(mins) {
+            initAudio(); // Wake up audio on button click
             resetTimer();
             totalTimeSet = mins * 60;
             timeLeft = totalTimeSet;
@@ -207,15 +228,13 @@
         }
 
         function timerFinished() {
-            display.classList.add('finished-glow');
             bee.classList.add('happy-wiggle');
-            display.textContent = "Bzzz!";
+            display.textContent = "DONE!";
             playEndSound();
         }
 
         function resetTimer() {
             clearInterval(countdown);
-            display.classList.remove('finished-glow');
             bee.classList.remove('happy-wiggle');
             bee.style.transform = `rotate(0deg)`;
             updateDisplay(0);
