@@ -3,80 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kids Space Timer</title>
+    <title>Easy Read Space Timer</title>
     <style>
         body {
-            font-family: 'Comic Sans MS', cursive, sans-serif; /* Friendly font */
-            background-color: #0b1a30; /* Dark space background */
+            /* Using standard clear fonts that are easy to read */
+            font-family: Arial, Helvetica, sans-serif; 
+            background-color: #0b1a30;
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Space from the top */
+            justify-content: flex-start;
             height: 100vh;
             margin: 0;
             overflow: hidden;
             transition: background-color 0.5s;
         }
 
-        h1 { font-size: 2.5rem; margin-top: 20px; color: #ffeb3b; }
+        h1 { 
+            font-size: 2.5rem; 
+            margin-top: 20px; 
+            color: #ffeb3b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
 
-        /* --- New Progress Bar and Rocket Styling --- */
         #launch-path {
             position: relative;
-            width: 100px;
-            height: 50vh; /* The distance the rocket travels */
+            width: 80px;
+            height: 45vh;
             background: rgba(255,255,255,0.1);
-            border-radius: 50px;
+            border-radius: 40px;
             margin: 20px 0;
-            border: 4px solid #fff;
-            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            border: 4px solid #ffffff;
         }
 
         #rocket {
             position: absolute;
-            bottom: 0; /* Start at bottom */
+            bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 4rem; /* Big rocket emoji */
-            transition: bottom 1s linear; /* Smooth movement */
+            font-size: 3.5rem;
+            transition: bottom 1s linear;
         }
 
-        /* The flame effect when running */
         #rocket.launching::after {
             content: '🔥';
             position: absolute;
-            bottom: -30px;
+            bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 2rem;
+            font-size: 1.5rem;
             animation: flicker 0.1s infinite;
         }
 
         @keyframes flicker {
             0% { opacity: 0.8; transform: translateX(-50%) scaleY(1); }
-            100% { opacity: 1; transform: translateX(-50%) scaleY(1.2); }
+            100% { opacity: 1; transform: translateX(-50%) scaleY(1.1); }
         }
 
-        /* --- Timer Display & Controls --- */
         .timer-display {
-            font-size: 5rem;
-            font-weight: bold;
+            font-size: 6rem;
+            font-weight: 900; /* Extra bold for clarity */
             margin: 10px;
-            padding: 10px 30px;
-            background: #282c34;
-            border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            padding: 15px 40px;
+            background: #1a1a1a;
+            border: 4px solid #61dafb;
+            border-radius: 15px;
             z-index: 10;
+            font-variant-numeric: tabular-nums; /* Keeps numbers from jumping */
         }
 
-        /* Post-launch party animation */
-        .finished { animation: party 0.2s infinite; }
+        .finished { 
+            animation: party 0.2s infinite; 
+        }
+
         @keyframes party {
             0% { background-color: #ff0000; }
-            25% { background-color: #00ff00; }
             50% { background-color: #0000ff; }
-            100% { background-color: #ffff00; }
+            100% { background-color: #00ff00; }
         }
 
         .controls, .custom-input, .action-btns {
@@ -85,39 +90,34 @@
         }
 
         button {
-            padding: 10px 20px;
-            font-size: 1.1rem;
+            padding: 12px 24px;
+            font-size: 1.2rem;
             cursor: pointer;
             border: none;
-            border-radius: 50px;
+            border-radius: 8px;
             background: #4caf50;
             color: white;
             font-weight: bold;
-            transition: 0.2s;
-            margin: 0 5px;
+            margin: 5px;
         }
 
-        button:hover { background: #81c784; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
+        button:hover { background: #66bb6a; }
 
         input {
-            padding: 10px;
-            font-size: 1.1rem;
-            border-radius: 50px;
+            padding: 12px;
+            font-size: 1.2rem;
+            border-radius: 8px;
             border: 2px solid #fff;
-            width: 70px;
+            width: 80px;
             text-align: center;
-            background: rgba(255,255,255,0.2);
-            color: white;
         }
 
         .stop-btn { background: #f44336; }
-        .stop-btn:hover { background: #e57373; }
     </style>
 </head>
 <body id="bg">
 
-    <h1>Space Mission Countdown!</h1>
+    <h1>Mission Countdown</h1>
 
     <div id="launch-path">
         <div id="rocket">🚀</div>
@@ -133,38 +133,36 @@
     </div>
 
     <div class="custom-input">
-        <input type="number" id="customMin" placeholder="Mins">
+        <input type="number" id="customMin" placeholder="0">
         <button onclick="setCustomTime()">Set Custom</button>
     </div>
 
     <div class="action-btns">
-        <button class="stop-btn" onclick="resetTimer()">Abort Mission</button>
+        <button class="stop-btn" onclick="resetTimer()">Reset Timer</button>
     </div>
 
     <script>
         let countdown;
         let timeLeft;
-        let totalTimeSet; // Needed to calculate progress
+        let totalTimeSet;
         const display = document.getElementById('display');
         const body = document.getElementById('bg');
         const rocket = document.getElementById('rocket');
 
-        // Audio Setup (Still synthesis, still offline)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playEndSound() {
-            // A slightly more "alien/spacey" melody
-            const notes = [440, 554.37, 659.25, 880, 1046.50]; 
+            const notes = [523.25, 659.25, 783.99, 1046.50]; 
             notes.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = 'sawtooth'; // Rougher, more fun sound
+                osc.type = 'triangle';
                 osc.frequency.value = freq;
                 gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + i + 1);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + (i * 0.15));
-                osc.stop(audioCtx.currentTime + (i * 0.15) + 0.4);
+                osc.start(audioCtx.currentTime + (i * 0.2));
+                osc.stop(audioCtx.currentTime + (i * 0.2) + 0.5);
             });
         }
 
@@ -172,11 +170,7 @@
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-            // --- Update Rocket Position ---
-            // Calculate how far up the rocket should be (0 to 100%)
-            const progress = ((totalTimeSet - seconds) / totalTimeSet) * 100;
-            // Apply that percentage to the 'bottom' CSS property
+            const progress = totalTimeSet > 0 ? ((totalTimeSet - seconds) / totalTimeSet) * 100 : 0;
             rocket.style.bottom = `${progress}%`;
         }
 
@@ -195,12 +189,10 @@
 
         function startTimer() {
             clearInterval(countdown);
-            rocket.classList.add('launching'); // Start the flame animation
-            
+            rocket.classList.add('launching');
             countdown = setInterval(() => {
                 timeLeft--;
                 updateDisplay(timeLeft);
-
                 if (timeLeft <= 0) {
                     clearInterval(countdown);
                     timerFinished();
@@ -210,10 +202,9 @@
 
         function timerFinished() {
             rocket.classList.remove('launching');
-            // Keep rocket at the very top (100%)
             rocket.style.bottom = '100%'; 
             body.classList.add('finished');
-            display.textContent = "LIFT OFF!";
+            display.textContent = "DONE!";
             playEndSound();
         }
 
@@ -221,11 +212,9 @@
             clearInterval(countdown);
             rocket.classList.remove('launching');
             body.classList.remove('finished');
-            // Reset rocket to the ground
             rocket.style.bottom = '0%'; 
             updateDisplay(0);
         }
     </script>
 </body>
 </html>
-
